@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "sam-ta"
+version = "0.1.0"
+description = ""
+authors = ["MISday <47630005+MISday@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pre-commit = "^3.5.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
