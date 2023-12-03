@@ -1,0 +1,2 @@
+defaults:
+  - sam: vit_b.yaml
