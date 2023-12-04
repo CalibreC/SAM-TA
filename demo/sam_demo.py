@@ -1,12 +1,15 @@
+import json
+
 import cv2
+import gradio as gr
 import hydra
 import numpy as np
 import yaml
 from matplotlib import pyplot as plt
 from omegaconf import DictConfig, OmegaConf
-import gradio as gr
-import json
+
 from SAMTA.ext.sam import SAM_predictor
+
 
 def plot_mask(img, masks, colors=None, alpha=0.5) -> np.ndarray:
     """Visualize segmentation mask.
@@ -46,16 +49,30 @@ def plot_mask(img, masks, colors=None, alpha=0.5) -> np.ndarray:
 def show_anns(anns, image):
     if len(anns) == 0:
         return
-    sorted_anns = sorted(anns, key=(lambda x: x['area']), reverse=True)
+    sorted_anns = sorted(anns, key=(lambda x: x["area"]), reverse=True)
 
-    img = np.ones((sorted_anns[0]['segmentation'].shape[0], sorted_anns[0]['segmentation'].shape[1], 4))
+    img = np.ones(
+        (
+            sorted_anns[0]["segmentation"].shape[0],
+            sorted_anns[0]["segmentation"].shape[1],
+            4,
+        )
+    )
     img[:, :, 3] = 0
     for ann in sorted_anns:
-        m = ann['segmentation']
+        m = ann["segmentation"]
         color_mask = np.concatenate([np.random.random(3), [0.35]])
         img[m] = color_mask
 
-    image = np.concatenate((image, np.zeros((image.shape[0], image.shape[1], 1), )), axis=2)
+    image = np.concatenate(
+        (
+            image,
+            np.zeros(
+                (image.shape[0], image.shape[1], 1),
+            ),
+        ),
+        axis=2,
+    )
     masked_img = plot_mask(image, sorted_anns)
 
     return masked_img
@@ -64,7 +81,7 @@ def show_anns(anns, image):
 def get_config(cfg: DictConfig):
     yaml_str = OmegaConf.to_yaml(cfg)
     yaml_dict = yaml.safe_load(yaml_str)
-    json_str = json.dumps(yaml_dict, sort_keys=False, indent=4, separators=(',', ': '))
+    json_str = json.dumps(yaml_dict, sort_keys=False, indent=4, separators=(",", ": "))
 
     print(type(json_str))
     print(json_str)
@@ -95,19 +112,11 @@ def main(cfg: DictConfig):
             gr.JSON(json_str, visible=False),
         ],
         outputs="image",
-        # examples=[
-        #     [
-        #         "https://0nism.oss-cn-beijing.aliyuncs.com/home/image-20231130114733931.png",
-        #     ],
-        # ],
-        cache_examples=False,
-        title='SAM-TA: Tracking Anything with SAM')
+        title="SAM-TA: Tracking Anything with SAM",
+    )
 
-    sam_demo.launch(server_name="0.0.0.0",
-                    server_port=12701,
-                    share=True)
+    sam_demo.launch(server_name="0.0.0.0", server_port=12701, share=True)
 
 
 if __name__ == "__main__":
-
     main()
