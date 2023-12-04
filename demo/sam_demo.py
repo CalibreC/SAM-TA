@@ -1,3 +1,4 @@
+import cv2
 import hydra
 import numpy as np
 import yaml
@@ -6,6 +7,40 @@ from omegaconf import DictConfig, OmegaConf
 import gradio as gr
 import json
 from SAMTA.ext.sam import SAM_predictor
+
+def plot_mask(img, masks, colors=None, alpha=0.5) -> np.ndarray:
+    """Visualize segmentation mask.
+
+    Parameters
+    ----------
+    img: numpy.ndarray
+        Image with shape `(H, W, 3)`.
+    masks: numpy.ndarray
+        Binary images with shape `(N, H, W)`.
+    colors: numpy.ndarray
+        color for mask, shape `(N, 3)`.
+        if None, generate random color for mask
+    alpha: float, optional, default 0.5
+        Transparency of plotted mask
+
+    Returns
+    -------
+    numpy.ndarray
+        The image plotted with segmentation masks, shape `(H, W, 3)`
+
+    """
+    if colors is None:
+        colors = np.random.random((masks.shape[0], 3)) * 255
+    else:
+        if colors.shape[0] < masks.shape[0]:
+            raise RuntimeError(
+                f"colors count: {colors.shape[0]} is less than masks count: {masks.shape[0]}"
+            )
+    for mask, color in zip(masks, colors):
+        mask = np.stack([mask, mask, mask], -1)
+        img = np.where(mask, img * (1 - alpha) + color * alpha, img)
+
+    return img.astype(np.uint8)
 
 
 def show_anns(anns, image):
@@ -20,10 +55,10 @@ def show_anns(anns, image):
         color_mask = np.concatenate([np.random.random(3), [0.35]])
         img[m] = color_mask
 
-    print(type(img))
-    print(img.shape)
+    image = np.concatenate((image, np.zeros((image.shape[0], image.shape[1], 1), )), axis=2)
+    masked_img = plot_mask(image, sorted_anns)
 
-    return img
+    return masked_img
 
 
 def get_config(cfg: DictConfig):
@@ -50,7 +85,6 @@ def demo_with_sam(image: gr.Image, config: gr.JSON):
 
 @hydra.main(version_base=None, config_path="../configs", config_name="config")
 def main(cfg: DictConfig):
-
     # 格式转换为json
     json_str = get_config(cfg)
 
@@ -75,4 +109,5 @@ def main(cfg: DictConfig):
 
 
 if __name__ == "__main__":
+
     main()
