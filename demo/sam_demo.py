@@ -51,29 +51,12 @@ def show_anns(anns, image):
         return
     sorted_anns = sorted(anns, key=(lambda x: x["area"]), reverse=True)
 
-    img = np.ones(
-        (
-            sorted_anns[0]["segmentation"].shape[0],
-            sorted_anns[0]["segmentation"].shape[1],
-            4,
-        )
-    )
-    img[:, :, 3] = 0
-    for ann in sorted_anns:
+    anns = np.zeros((len(sorted_anns), image.shape[0], image.shape[1]))
+    for index, ann in enumerate(sorted_anns):
         m = ann["segmentation"]
-        color_mask = np.concatenate([np.random.random(3), [0.35]])
-        img[m] = color_mask
+        anns[index, :, :] = m
 
-    image = np.concatenate(
-        (
-            image,
-            np.zeros(
-                (image.shape[0], image.shape[1], 1),
-            ),
-        ),
-        axis=2,
-    )
-    masked_img = plot_mask(image, sorted_anns)
+    masked_img = plot_mask(image, anns)
 
     return masked_img
 
